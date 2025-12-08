@@ -1,8 +1,13 @@
 #!/bin/bash
 
+TARGET_DIR="$(rospack find clover_simulation)/resources/worlds"
+SOURCE_DIR="$HOME/NTO_LR_PWR/worlds"
 
-#!/bin/bash
+echo "Копирование миров из $SOURCE_DIR в $TARGET_DIR..."
 
+if [ -d "$SOURCE_DIR" ]; then
+    cp -f "$SOURCE_DIR"/*.world "$TARGET_DIR"/
+fi
 
 echo aruco.launch Настроен
 
@@ -14,10 +19,16 @@ echo clover.launch Настроен
 
 sed -i '10s|<arg name="aruco" default="false"/>|<arg name="aruco" default="true"/>|' clover.launch
 
-dir="$(rospack find clover_simulation)/resources/worlds"
+
+dir="$TARGET_DIR" 
 worlds=("$dir"/*.world)
 
-random_world=${worlds[$random % ${#worlds[@]}]}
+if [ ${#worlds[@]} -eq 0 ]; then
+    exit 1
+fi
+
+random_world=${worlds[$RANDOM % ${#worlds[@]}]}
+
 name=$(name "$random_world")
 
 SIM_LAUNCH=$(rospack find clover_simulation)/launch/simulator.launch
