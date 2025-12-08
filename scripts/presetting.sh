@@ -1,6 +1,9 @@
 #!/bin/bash
 
 
+#!/bin/bash
+
+
 echo aruco.launch Настроен
 
 sed -i '3s|<arg name="aruco_map" default="false"/>|<arg name="aruco_map" default="true"/>|' aruco.launch
@@ -23,3 +26,7 @@ SIM_LAUNCH=$(rospack find clover_simulation)/launch/simulator.launch
 echo simulator.launch Настроен
 
 sed -i "s|<arg name=\"world_name\" value=\".*\"/>|<arg name=\"world_name\" value=\"$(rospack find clover_simulation)/resources/worlds/$name\"/>|" "$SIM_LAUNCH"
+
+echo index.html Настроен
+
+sed -i '/<li><a href="console.html">Clover console<\/a> (<code>\/var\/log\/clover.log<\/code>)<\/li>/a\ \ \ \ <li><a href="web/nto.html">NTO</a></li>' clover/www/index.html
