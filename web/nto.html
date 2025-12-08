@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<script src="https://unpkg.com/roslib/build/roslib.min.js"></script>
+<script src="https://unpkg.com/three/build/three.js"></script>
+<script src="https://unpkg.com/ros3d/build/ros3d.min.js"></script>
+
+<style>
+    body { font-family: Arial; margin: 20px; }
+    .top-panel { display:flex; gap:10px; margin-bottom:20px; }
+    #map { border:1px solid #000; width:500px; height:500px; background:#fafafa; }
+
+    #rviz_view {
+        width: 600px;
+        height: 400px;
+        border: 2px solid #333;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h2>Панель управления миссией</h2>
+
+<div class="top-panel">
+    <button onclick="sendCommand('start')">START</button>
+    <button onclick="sendCommand('stop')">STOP</button>
+    <button onclick="sendCommand('kill')">KILL SWITCH</button>
+</div>
+
+<div>
+    <h3>Найденные врезки:</h3>
+    <pre id="tubes_list">—</pre>
+</div>
+
+<h3>Карта (локальная)</h3>
+<canvas id="map"></canvas>
+
+<h3>RVIZ</h3>
+<div id="rviz_view"></div>
+
+<script>
+
+function sendCommand(cmd) {
+    fetch("/command/" + cmd, {method:"POST"})
+        .then(r => r.text())
+        .then(t => console.log("CMD:", t));
+}
+
+
+function updateData() {
+    fetch("/tubes.json").then(r => r.json()).then(data => {
+        document.getElementById("tubes_list").innerText = JSON.stringify(data, null, 2);
+        drawMap(data);
+    });
+}
+
+function drawMap(data) {
+    const c = document.getElementById("map");
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0,0,c.width,c.height);
+
+    ctx.fillStyle="black";
+    ctx.fillText("0,0", 245, 255);
+
+    ctx.strokeStyle="blue";
+    ctx.lineWidth=4;
+    if (data.pipeline) {
+        ctx.beginPath();
+        ctx.moveTo(data.pipeline[0].x*20+250, data.pipeline[0].y*(-20)+250);
+        for (let p of data.pipeline)
+            ctx.lineTo(p.x*20+250, p.y*(-20)+250);
+        ctx.stroke();
+    }
+
+    ctx.fillStyle="red";
+    if (data.tubes) {
+        for (let t of data.tubes) {
+            ctx.beginPath();
+            ctx.arc(t.x*20+250, t.y*(-20)+250, 6, 0, 2*Math.PI);
+            ctx.fill();
+        }
+    }
+}
+
+setInterval(updateData, 500);
+
+
+const ros = new ROSLIB.Ros({
+    url: "ws://localhost:9090"
+});
+
+// создаём WebRViz окно
+const viewer = new ROS3D.Viewer({
+    divID: "rviz_view",
+    width: 600,
+    height: 400,
+    antialias: true
+});
+
+const tfClient = new ROSLIB.TFClient({
+    ros : ros,
+    fixedFrame : "aruco_map",
+    angularThres : 0.01,
+    transThres : 0.01
+});
+
+
+const markerClient = new ROS3D.MarkerClient({
+    ros : ros,
+    tfClient : tfClient,
+    topic : "/pipeline_markers",
+    rootObject : viewer.scene
+});
+
+</script>
+
+</body>
+</html>
