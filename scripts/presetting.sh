@@ -41,3 +41,12 @@ sed -i "s|<arg name=\"world_name\" value=\".*\"/>|<arg name=\"world_name\" value
 echo index.html Настроен
 
 sed -i '/<li><a href="console.html">Clover console<\/a> (<code>\/var\/log\/clover.log<\/code>)<\/li>/a\ \ \ \ <li><a href="web/nto.html">NTO</a></li>' clover/www/index.html
+
+roslaunch rosbridge_server rosbridge_websocket.launch > /dev/null 2>&1 &
+
+sleep 1 
+
+rosrun rosbridge_server rosbridge_websocket > /dev/null 2>&1 &
+
+echo ROSBridge on
+
